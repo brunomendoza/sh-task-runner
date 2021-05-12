@@ -1,0 +1,89 @@
+#!/bin/bash
+
+if [ -a $1 ]
+then
+    echo "File exists"
+    exit 1
+fi
+
+mkdir $1 && cd $_
+
+cat > package.json <<EOF
+{
+    "name": "$1",
+    "version": "0.0.1",
+    "scripts": {
+        "build": "webpack"
+    }
+}
+EOF
+
+npm install \
+    react \
+    react-dom \
+    @babel/core \
+    @babel/preset-env \
+    @babel/preset-react \
+    webpack \
+    webpack-cli \
+    babel-loader \
+    --save-dev
+
+# cat > .babelrc.json <<EOF
+# {
+#     "presets": [ "@babel/preset-env", "@babel/preset-react" ]
+# }
+# EOF
+
+cat > webpack.config.js <<EOF
+const path = require("path")
+
+module.exports = {
+    entry: "./src/index.js",
+    mode: "development",
+    module: {
+        rules: [
+            {
+                test: /\.(js|jsx)/i,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        // The following line can be replaced by a .babelrc.json config file
+                        presets: [ "@babel/preset-env", "@babel/preset-react" ]
+                    }
+                }
+            }
+        ]
+    },
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'bundle.js'
+    }
+}
+EOF
+
+mkdir src
+
+cat > src/index.js <<EOF
+import React from "react"
+import ReactDOM from "react-dom"
+
+ReactDOM.render(<h1>Hello World!</h1>, document.getElementById("root"))
+EOF
+
+cat > index.html <<EOF
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script src="./dist/bundle.js"></script>
+</body>
+</html>
+EOF
+
+npm run-script build
