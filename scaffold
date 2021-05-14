@@ -13,7 +13,9 @@ cat > package.json <<EOF
     "name": "$1",
     "version": "0.0.1",
     "scripts": {
-        "build": "webpack"
+        "build": "webpack",
+        "watch": "webpack --watch",
+        "start": "webpack serve --open"
     }
 }
 EOF
@@ -26,6 +28,7 @@ npm install \
     @babel/preset-react \
     webpack \
     webpack-cli \
+    webpack-dev-server \
     babel-loader \
     --save-dev
 
@@ -41,6 +44,11 @@ const path = require("path")
 module.exports = {
     entry: "./src/index.js",
     mode: "development",
+    devtool: 'inline-source-map',
+    devServer: {
+        contentBase: path.join(__dirname. 'dist'),
+        hot: true;
+    },
     module: {
         rules: [
             {
@@ -77,6 +85,7 @@ cat > index.html <<EOF
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hello World</title>
 </head>
 <body>
