@@ -10,13 +10,14 @@ mkdir $1 && cd $_
 
 cat > package.json <<EOF
 {
-    "name": "$1",
+    "name": "${1##*/}",
     "version": "0.0.1",
     "scripts": {
         "build": "webpack",
         "watch": "webpack --watch",
         "start": "webpack serve --open"
-    }
+    },
+    "devDependencies": {}
 }
 EOF
 
@@ -29,6 +30,10 @@ npm install \
     webpack \
     webpack-cli \
     webpack-dev-server \
+    html-webpack-plugin \
+    style-loader \
+    css-loader \
+    sass-loader \
     babel-loader \
     --save-dev
 
@@ -40,6 +45,7 @@ npm install \
 
 cat > webpack.config.js <<EOF
 const path = require("path")
+const HtmlWebpackPlugin = require("html-webpack-plugin")
 
 module.exports = {
     entry: "./src/index.js",
@@ -49,6 +55,12 @@ module.exports = {
         contentBase: path.join(__dirname, 'dist'),
         hot: true
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: "${1##*/}",
+            template: path.resolve(__dirname, "src/index.html")
+        }),
+    ],
     module: {
         rules: [
             {
@@ -80,17 +92,15 @@ import ReactDOM from "react-dom"
 ReactDOM.render(<h1>Hello World!</h1>, document.getElementById("root"))
 EOF
 
-cat > index.html <<EOF
+cat > src/index.html <<EOF
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hello World</title>
 </head>
 <body>
     <div id="root"></div>
-    <script src="./dist/bundle.js"></script>
 </body>
 </html>
 EOF
