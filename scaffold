@@ -21,7 +21,7 @@ cat > package.json <<EOF
 }
 EOF
 
-npm install \
+npm i -D \
     react \
     react-dom \
     @babel/core \
@@ -35,7 +35,7 @@ npm install \
     css-loader \
     sass-loader \
     babel-loader \
-    --save-dev
+    sass
 
 # cat > .babelrc.json <<EOF
 # {
@@ -53,6 +53,7 @@ module.exports = {
     devtool: 'inline-source-map',
     devServer: {
         contentBase: path.join(__dirname, 'dist'),
+        port: 9000,
         hot: true
     },
     plugins: [
@@ -73,6 +74,10 @@ module.exports = {
                         presets: [ "@babel/preset-env", "@babel/preset-react" ]
                     }
                 }
+            },
+            {
+                test: /\.s(ass|css)$/i,
+                use: ["style-loader", "css-loader", "sass-loader"]
             }
         ]
     },
@@ -89,14 +94,26 @@ cat > src/index.js <<EOF
 import React from "react"
 import ReactDOM from "react-dom"
 
-ReactDOM.render(<h1>Hello World!</h1>, document.getElementById("root"))
+ReactDOM.render(<App />, document.getElementById("root"))
+EOF
+
+cat > src/App.js <<EOF
+import React from "react"
+
+function App() {
+  return (
+    <div>App</div>
+  )
+}
+
+export default App
 EOF
 
 cat > src/index.html <<EOF
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
