@@ -1,17 +1,22 @@
 #!/bin/bash
 
-if [ -a $1 ]
-then
-    echo "File exists"
-    exit 1
-fi
+file_exists() {
+    if [ -a $1 ]
+    then
+        echo "File exists"
+        exit 1
+    fi
 
-mkdir $1 && cd $_
+    mkdir -p $1/src && cd $1
+}
 
+package_json() {
 cat > package.json <<EOF
 {
     "name": "${1##*/}",
     "version": "0.0.1",
+    "private": true,
+    "description": "",
     "scripts": {
         "build": "webpack",
         "watch": "webpack --watch",
@@ -20,22 +25,30 @@ cat > package.json <<EOF
     "devDependencies": {}
 }
 EOF
+}
 
-npm i -D \
-    react \
-    react-dom \
-    @babel/core \
-    @babel/preset-env \
-    @babel/preset-react \
-    webpack \
-    webpack-cli \
-    webpack-dev-server \
-    html-webpack-plugin \
-    style-loader \
-    css-loader \
-    sass-loader \
-    babel-loader \
-    sass
+npm_i_default() {
+    npm i -D \
+        webpack \
+        webpack-cli \
+        webpack-dev-server \
+        html-webpack-plugin \
+        style-loader \
+        css-loader \
+        sass-loader \
+        sass
+}
+
+npm_i_react() {
+    npm i -D \
+        react \
+        react-dom \
+        @babel/core \
+        @babel/preset-env \
+        @babel/preset-react \
+        babel-loader
+}
+
 
 # cat > .babelrc.json <<EOF
 # {
@@ -43,6 +56,43 @@ npm i -D \
 # }
 # EOF
 
+webpack_config_default() {
+cat > webpack.config.js <<EOF
+const path = require("path")
+const HtmlWebpackPlugin = require("html-webpack-plugin")
+
+module.exports = {
+    entry: "./src/index.js",
+    mode: "development",
+    devtool: 'inline-source-map',
+    devServer: {
+        contentBase: path.join(__dirname, 'dist'),
+        port: 9000,
+        hot: true
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: "${1##*/}",
+            template: path.resolve(__dirname, "src/index.html")
+        }),
+    ],
+    module: {
+        rules: [
+            {
+                test: /\.s(ass|css)$/i,
+                use: ["style-loader", "css-loader", "sass-loader"]
+            }
+        ]
+    },
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'bundle.js'
+    }
+}
+EOF
+}
+
+webpack_config_react() {
 cat > webpack.config.js <<EOF
 const path = require("path")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
@@ -87,16 +137,26 @@ module.exports = {
     }
 }
 EOF
+}
 
-mkdir src
+mk_index_js() {
+cat > src/index.js <<EOF
+(() => {
+    console.log("Hello, JS!")
+})()
+EOF
+}
 
+mk_react_index_js() {
 cat > src/index.js <<EOF
 import React from "react"
 import ReactDOM from "react-dom"
 
 ReactDOM.render(<App />, document.getElementById("root"))
 EOF
+}
 
+mk_react_app_js() {
 cat > src/App.js <<EOF
 import React from "react"
 
@@ -105,10 +165,11 @@ function App() {
     <div>App</div>
   )
 }
-
 export default App
 EOF
+}
 
+mk_index_html() {
 cat > src/index.html <<EOF
 <!DOCTYPE html>
 <html lang="es">
@@ -121,5 +182,58 @@ cat > src/index.html <<EOF
 </body>
 </html>
 EOF
+}
 
-npm run-script build
+mk_git_ignore() {
+cat >> .gitignore <<EOF
+node_modules
+package-lock.json
+dist
+EOF
+}
+
+mk_default() {
+    file_exists $1
+    package_json
+    npm_i_default
+    webpack_config_default
+    mk_index_js
+    mk_index_html
+    mk_git_ignore
+    npm run-script build
+}
+
+mk_react() {
+    file_exists $1
+    package_json
+    npm_i_default
+    npm_i_react
+    webpack_config_react
+    mk_react_index_js
+    mk_react_app_js
+    mk_index_html
+    mk_git_ignore
+    npm run-script build
+}
+
+select OPT in default react quit
+do
+    case $OPT in
+        "default")
+            mk_default $1
+            break
+            ;;
+        "react")
+            mk_react $1
+            break
+            ;;
+        "quit")
+            echo "Exiting"
+            break
+            ;;
+        *)
+            echo "Option not available"
+            break
+            ;;
+    esac
+done
