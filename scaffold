@@ -3,8 +3,17 @@
 file_exists() {
     if [ -a $1 ]
     then
-        echo "File exists"
-        exit 1
+        echo "Do you want to overwrite \"$1\"? (y/n)"
+        read -n 1 reply
+	echo $reply
+
+	echo
+
+        if [ ${reply:-'n'} != 'y' ]
+        then
+            echo "File exists"
+            exit 1
+        fi
     fi
 
     mkdir -p $1/src && cd $1
